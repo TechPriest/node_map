@@ -1,0 +1,9 @@
+; $id$
+name = Node Map
+description = Global map for nodes with associated locations
+core = 6.x
+package = Misc
+dependencies[] = content
+dependencies[] = location
+dependencies[] = gmap
+

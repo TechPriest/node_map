@@ -1,0 +1,45 @@
+<?php
+// $id$
+
+/**
+ * Implementation of hook_install()
+ * @return void
+ */
+function location_marker_install() {
+  drupal_install_schema('location_marker');
+}
+
+/**
+ * Implementation of hook_uninstall
+ * @return void
+ */
+function location_marker_uninstall() {
+  drupal_uninstall_schema('location_marker');
+}
+
+/**
+ * Implementation of hook_schema()
+ * @return array
+ */
+function location_marker_schema() {
+  $schema = array();
+  $schema['location_marker'] = array(
+    'description' => t('Used to store location markers.'),
+    'fields' => array(
+      'lid' => array(
+        'description' => t('Location ID.'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'marker' => array(
+        'description' => t('Marker machine name.'),
+        'type' => 'varchar',
+        'length' => '64',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('lid'),
+  );
+  return $schema;
+}

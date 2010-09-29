@@ -1,0 +1,294 @@
+<?php
+// $id
+
+
+/**
+ * Implementation of hook_theme()
+ *
+ * @return array
+ */
+function node_map_theme($existing, $type, $theme, $path) {
+  return array(
+    'node_map_settings' => array(
+      'arguments' => array(
+        'form' => null
+      ),
+    ),
+  );
+}
+
+/**
+ * Themes the settings form
+ *
+ * @return string
+ */
+function theme_node_map_settings($form) {
+  $output = '';
+  $rows = array();
+  
+  foreach (element_children($form['name']) as $key) {
+    $rows[] = array(
+      drupal_render($form['use_map'][$key]),
+      drupal_render($form['name'][$key]),
+    );
+  }
+
+  $output .= theme('table', $form['header']['#value'], $rows);  // render the table
+  $output .= drupal_render($form);  // output the rest of the form
+  return $output;
+}
+
+/**
+ * Settings form form Taxonomy Map
+ * @return array
+ */
+function node_map_settings() {
+  $form = array();
+  // set header
+  $form['header'] = array(
+    '#type' => 'value',
+    '#value' => array(theme('table_select_header_cell'), t('Name')),
+  );
+
+  // gather data
+  $options = array();
+  $types = db_query('SELECT `type`, `name` FROM {node_type}');
+  while ($type = db_fetch_object($types)) {
+    $options[$type->type] = '';
+    $form['use_map'][$type->type] = '';
+    $form['name'][$type->type] = array('#value' => l($type->name, sprintf('node_map/%s', $type->type)));
+  }
+
+  $form['use_map'] = array(
+    '#type' => 'checkboxes',
+    '#options' => $options,
+    '#default_value' => variable_get('node_map_enabled_nodes', array()),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  $form['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Cancel'), 'settings'), 
+  );
+
+  return $form;
+}
+
+/**
+ * Submits data from node map settings page
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return void
+ */
+function node_map_settings_submit($form, &$form_state) {
+  $enabled = array();
+  foreach ($form_state['values']['use_map'] as $key => $val)
+    if ($val)
+      $enabled[] = $key;
+  variable_set('node_map_enabled_nodes', $enabled);
+}
+
+/**
+ * Renders node map page
+ *
+ * @param  string $type
+ * @return void
+ */
+function node_map_page() {
+//  krumo(gmap_get_marker_titles());
+//  krumo(gmap_get_icondata());
+  _node_map_get_marker_info();
+
+  $args = func_get_args();
+  $type = array_shift($args);
+  $type = strip_tags($type);
+  $enabled = variable_get('node_map_enabled_nodes', array());
+  if (!in_array($type, $enabled))
+    return sprintf('Node map for type "%s" is disabled.', $type);
+  // Render the map
+  $dir = drupal_get_path('module', 'node_map');
+  drupal_add_css($dir . '/css/node_map.css');
+  drupal_set_html_head('<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>');
+  drupal_add_js($dir . '/js/node_map.js');
+  $output = sprintf('<div id="node_map" data-node-type="%s"></div>', $type);
+  return $output;
+}
+
+/**
+ * Gathers marker info
+ *
+ * @param bool $reset
+ * @return void
+ */
+function _node_map_get_marker_info($reset = FALSE) {
+  if ($reset || !($markerdata = cache_get('node_map_marker_info')))
+  {
+    $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
+    $icondata = gmap_get_icondata($reset);
+    $markerdata = array();
+
+    foreach ($icondata as $path => $icons) {
+      $files = &$icons['f'];
+      $widths = &$icons['w'];
+      $heights = &$icons['h'];
+      //$titles = array();
+      $markerdata[$path] = array('f' => $files, 'w' => $widths, 'h' => $heights);
+    }
+
+    krumo($markerdata);
+  }
+
+//  krumo(gmap_get_icondata());
+//  if ($clear || !($marker_data = cache_get('node_map_marker_info'))) {
+//    $icons = array();
+//    $imagetypes = array(
+//      'shadow',
+//      'printImage',
+//      'mozPrintImage',
+//      'printShadow',
+//      'transparent',
+//    );
+//    $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
+//    $inifiles = file_scan_directory($markerdir, '.*\.ini$');
+//    $inis = array();
+//    foreach ($inifiles as $file) {
+//      $path = substr($file->filename, strlen($markerdir), -strlen($file->basename));
+////      if (!isset($inis[$path]))
+////      {
+////        $inis = array();
+////      }
+//      $data = parse_ini_file($file->filename, TRUE);
+//      foreach ($data as $d) {
+//        krumo($d);
+//      }
+//      $inis += $data;
+//    }
+//    unset($inifiles);
+//    // per directory
+////    foreach ($inis as $path => $path_inis) {
+////      $icons[$path] = array(
+////
+////      );
+////    }
+//    krumo($inis);
+//  }
+//  return $marker_data;
+
+  return $markerdata;
+}
+
+/**
+ * Node Map ajax callback
+ *
+ * @return void
+ */
+function node_map_ajax_callback() {
+  $type = func_get_arg(0);
+  if (!$type)
+    drupal_access_denied();
+  $q = sprintf('SELECT {location_marker}.*, {location}.* FROM {location_marker} '
+    . 'INNER JOIN {location} ON {location_marker}.lid = {location}.lid '
+    . 'INNER JOIN {location_instance} ON {location_marker}.lid = {location_instance}.lid '
+    . 'INNER JOIN {node} ON {node}.nid = {location_instance}.nid '
+    . 'WHERE {node}.type="%s"', db_escape_string($type));
+  $markers = array();  
+  $r = db_query($q);
+  while ($row = db_fetch_object($r)) {
+    $markers[] = $row;
+  }
+  $result = array();
+  $ndx = 0;
+  foreach ($markers as $marker) {
+    $marker->info = sprintf('My marker %d', ++$ndx);
+    $result[] = $marker;
+  }
+
+//  srand();
+//
+//  // populate marker list
+//  $markers = array();
+//
+//  $lat = 41.875696;
+//  $lng = -87.624207;
+//
+//  $marker = new stdClass();
+//  $marker->latitude = $lat;
+//  $marker->longitude = $lng;
+//  $marker->info = sprintf('My marker');
+//  $markers[] = $marker;
+//
+//  for ($i = 0; $i < 10; $i++) {
+//    $marker = new stdClass();
+//    $marker->latitude = $lat - (rand() / getrandmax());
+//    $marker->longitude = $lng - (rand() / getrandmax());;
+//    $marker->info = sprintf('My marker %d', $i);
+//    $markers[] = $marker;
+//  }
+
+  // Send data to client
+  header('Content-Type: text/javascript; charset: UTF-8');
+  print(json_encode($result));
+  exit();
+}
+
+/**
+ * Implementation of hook_menu()
+ *
+ * @return array
+ */
+function node_map_menu() {
+  $items = array();
+  $items['admin/settings/node_map'] = array(
+    'title' => t('Node Map'),
+    'description' => 'Configure Node Map.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('node_map_settings'),
+    'access arguments' => array('administer node map'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['node_map_callback/%'] = array(
+    'title' => 'Node Map ajax callback',
+    'page callback' => 'node_map_ajax_callback',
+    'page arguments' => array(1),
+    'access arguments' => array('access node map'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['node_map/%'] = array(
+    'title' => t('Node Map'),
+    'page callback' => 'node_map_page',
+    'page arguments' => array(1),
+    'access arguments' => array('access node map'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_perm()
+ *
+ * @return array
+ */
+function node_map_perm() {
+  return array('access node map');
+}
+
+/**
+ * Implementaion of hook_help()
+ * Displays help and module information
+ *
+ * @param string $path
+ * @param array $arg
+ * @return string
+ */
+function node_map_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case 'admin/help#node_map':
+      $output = '<p>'.t('Displays Node Map pages').'</p>';
+      break;
+  }
+  return $output;
+}

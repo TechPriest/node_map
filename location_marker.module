@@ -1,0 +1,111 @@
+<?php
+// $id$
+
+/**
+ * Implementation of hook_moduleapi()
+ *
+ * @param object $obj
+ * @param string $op
+ * @param mixed $a1
+ * @param mixed $a2
+ * @param mixed $a3
+ * @return mixed
+ */
+function location_marker_locationapi(&$obj, $op, $a3, $a4, $a5) {
+  switch ($op) {
+    case 'save':
+      $record = array('lid' => $obj['lid'], 'marker' => $obj['location_marker']);
+      $res = TRUE;
+      // count existing records
+      $cnt = db_result(db_query(sprintf('SELECT COUNT(*) FROM {location_marker} WHERE `lid`="%d"', $obj['lid'])));
+      if ($cnt) {
+        // gotta update
+        $res = drupal_write_record('location_marker', $record, array('lid'));
+      } else {
+        // gotta insert
+        $res = drupal_write_record('location_marker', $record);
+      }
+      if (FALSE == $res)
+        drupal_set_message(t('Failed to write location marker record.'), 'error');
+      break;
+    case 'delete':
+      $q = sprintf('DELETE FROM {location_marker} WHERE `lid`=%d', $obj['lid']);
+      break;
+    case 'load':
+      $q = sprintf('SELECT `marker` FROM {location_marker} WHERE `lid`="%d" LIMIT 1', $obj['lid']);
+      return array('location_marker' => db_result(db_query($q)));
+    case 'fields':
+      return array('location_marker' => t('Location marker'));
+    case 'virtual fields':
+      return array();
+    case 'defaults':
+      return array('location_marker' => array(
+        'default' => '',
+        'collect' => 1,
+        'weight' => 18));
+    case 'validate':
+      return TRUE; 
+    case 'field_expand':
+      switch ($a3) {
+        case 'location_marker':
+          $options = array('' => t('None'));
+          $options = array_merge($options, gmap_get_marker_titles());
+          return array(
+            '#type'           => 'select',
+            '#multiple'       => FALSE,
+            '#options'        => $options,
+            '#title'          => t('Location marker'),
+            '#default_value'  => $obj,
+            '#required'       => FALSE,            
+          );
+      }
+      break;
+    case 'isunchanged':
+      return FALSE; // @@@TODO:
+  }
+  return null;
+}
+
+/**
+ * Implementation of hook_gmap()
+ *
+ * @param  string $op
+ * @param  object $map
+ * @return mixed
+ */
+function location_marker_gmap($op, &$map) {
+  //drupal_set_message(__FUNCTION__ . '(), $op = ' . $op);
+  switch ($op) {
+    case 'pre_theme_map':
+      // Iterate through all the markers and look for custom icons
+      if (count($map['markers'])) {
+        $first = true;
+        foreach ($map['markers'] as $marker) {
+          if ($first) {
+            $cond .= ' OR ';
+            $first = false;
+          }
+          $cond = sprintf('({location}.longitude="%s" AND {location}.latitude="%s")',
+            $marker['longitude'], $marker['latitude']);
+        }
+        $q = "SELECT {location_marker}.*, {location}.latitude AS lat, {location}.longitude AS lgt FROM {location_marker} "
+          . "INNER JOIN {location} "
+          . "ON {location}.lid = {location_marker}.lid "
+          . "WHERE $cond";
+        $r = db_query($q);
+        $cache = array();
+        while ($obj = db_fetch_object($r))
+          $cache[] = $obj;
+        foreach ($map['markers'] as &$marker) {
+          foreach ($cache as $c) {
+            if ($marker['latitude'] == $c->lat && $marker['longitude'] == $c->lgt) {
+              $marker['markername'] = $c->marker; 
+              break;
+            }
+          }
+        }
+      }
+      break;
+  }
+}
+

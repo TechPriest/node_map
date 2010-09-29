@@ -1,0 +1,10 @@
+; $id$
+name = Location marker
+description = Adds GMap marker to location
+core = 6.x
+package = Location
+dependencies[] = location
+dependencies[] = gmap
+
+;
+version = "6.x-1.x-dev"

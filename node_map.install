@@ -1,0 +1,23 @@
+<?php
+// $id$
+
+/**
+ * Implementation of hook_install()
+ *
+ * @return void
+ */
+function node_map_install() {
+  // Still nothing to do
+}
+
+/**
+ * Implementation of hook_uninstall()
+ *
+ * @return void
+ */
+function node_map_uninstall() {
+  variable_del('node_map_enabled_nodes');
+  cache_clear_all(array('node_map_marker_info'));
+}
+
+
