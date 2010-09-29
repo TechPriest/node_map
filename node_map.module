@@ -118,6 +118,20 @@ function node_map_page() {
 }
 
 /**
+ * Processes directory w/ markers
+ *
+ * @param string $path
+ * @param ref array $markerdata
+ * @return void
+ */
+function _node_map_process_marker_dir($path, &$markerdata) {
+  $inifiles = file_scan_directory($path, '.*\.ini$');
+  krumo($inifiles);
+
+}
+
+
+/**
  * Gathers marker info
  *
  * @param bool $reset
@@ -127,56 +141,8 @@ function _node_map_get_marker_info($reset = FALSE) {
   if ($reset || !($markerdata = cache_get('node_map_marker_info')))
   {
     $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
-    $icondata = gmap_get_icondata($reset);
-    $markerdata = array();
-
-    foreach ($icondata as $path => $icons) {
-      $files = &$icons['f'];
-      $widths = &$icons['w'];
-      $heights = &$icons['h'];
-      //$titles = array();
-      $markerdata[$path] = array('f' => $files, 'w' => $widths, 'h' => $heights);
-    }
-
-    krumo($markerdata);
+    _node_map_process_marker_dir($markerdir, $markerdata);
   }
-
-//  krumo(gmap_get_icondata());
-//  if ($clear || !($marker_data = cache_get('node_map_marker_info'))) {
-//    $icons = array();
-//    $imagetypes = array(
-//      'shadow',
-//      'printImage',
-//      'mozPrintImage',
-//      'printShadow',
-//      'transparent',
-//    );
-//    $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
-//    $inifiles = file_scan_directory($markerdir, '.*\.ini$');
-//    $inis = array();
-//    foreach ($inifiles as $file) {
-//      $path = substr($file->filename, strlen($markerdir), -strlen($file->basename));
-////      if (!isset($inis[$path]))
-////      {
-////        $inis = array();
-////      }
-//      $data = parse_ini_file($file->filename, TRUE);
-//      foreach ($data as $d) {
-//        krumo($d);
-//      }
-//      $inis += $data;
-//    }
-//    unset($inifiles);
-//    // per directory
-////    foreach ($inis as $path => $path_inis) {
-////      $icons[$path] = array(
-////
-////      );
-////    }
-//    krumo($inis);
-//  }
-//  return $marker_data;
-
   return $markerdata;
 }
 
