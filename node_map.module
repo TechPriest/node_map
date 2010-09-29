@@ -121,13 +121,39 @@ function node_map_page() {
  * Processes directory w/ markers
  *
  * @param string $path
- * @param ref array $markerdata
- * @return void
+ * @return array
  */
-function _node_map_process_marker_dir($path, &$markerdata) {
+function _node_map_process_marker_dir($path) {
+  static $fields = array('shadow', 'anchorX', 'anchorY', 'infoX', 'infoY');
+  $markerdata = array();
   $inifiles = file_scan_directory($path, '.*\.ini$');
-  krumo($inifiles);
+  foreach ($inifiles as $inifile) {
+    $tpath = substr($inifile->filename, strlen($path), -strlen($inifile->basename));;
+    $ini = parse_ini_file($inifile->filename, TRUE);
+    $defaults = isset($ini['defaults']) ? $ini['defaults'] : array();
+    unset($ini['defaults']);
+    foreach ($ini as $title => $section) {
+      // @@@TODO: more compact data storage
+      $markerobj = new stdClass();
+      $markerobj->type = $title;
+      $markerobj->path = $path . $tpath;
 
+      if (!isset($section['name']) || !isset($section['sequence']))
+        continue; // invalid marker definition
+      $markerobj->name = $section['name'];
+      $markerobj->sequence = $section['sequence'];
+
+      foreach ($fields as $field) {
+        $markerobj->$field = isset($section[$field]) ? $section[$field] :
+          (isset($defaults[$field]) ? $defaults[$field] : '');
+      }
+
+      $markerdata[] = $markerobj;
+      unset($markerobj);
+    }
+    unset($ini);
+  }
+  return $markerdata;
 }
 
 
@@ -141,9 +167,20 @@ function _node_map_get_marker_info($reset = FALSE) {
   if ($reset || !($markerdata = cache_get('node_map_marker_info')))
   {
     $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
-    _node_map_process_marker_dir($markerdir, $markerdata);
+    $markerdata = _node_map_process_marker_dir($markerdir, $markerdata);
+    cache_set('node_map_marker_info', $markerdata);
   }
   return $markerdata;
+}
+
+
+/**
+ * Implementaion of hook_flush_caches()
+ *
+ * @return void
+ */
+function node_map_flush_caches() {
+  cache_clear_all('node_map_marker_info');
 }
 
 /**
