@@ -183,7 +183,7 @@ function _node_map_get_marker_info($reset = FALSE) {
  * @return void
  */
 function node_map_flush_caches() {
-  cache_clear_all('node_map_marker_info');
+//  cache_clear_all('node_map_marker_info');
 }
 
 /**
@@ -240,12 +240,9 @@ function _node_map_ajax_callback_markers($args) {
  * @return void
  */
 function _node_map_ajax_callback_info($args) {
-  $type = array_shift($args);
-  if (!_node_map_type_check($type))
-    return;
-
   $nid = array_shift($args);
-  return sprintf('<strong>This is node with nid = %d</strong>', $nid);
+  printf('<strong>This is node with nid = %d</strong>', $nid);
+  exit();
 }
 
 /**

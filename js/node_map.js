@@ -18,7 +18,7 @@ var node_map = {
       url: '/node_map_callback/markers/' + type,
       dataType: 'json',
       error: function(request, status, exception) {
-        alert('Failed to load map data');
+        alert('Failed to load map data!');
       },
       success: function(data, status, request) {
         node_map.processData(data);
@@ -54,10 +54,18 @@ var node_map = {
     }
     var marker = new google.maps.Marker(markerOpts);
     google.maps.event.addListener(marker, 'click', function() {
-      var infoWindow = new google.maps.InfoWindow({
-        content: '<strong>Displaying information for node ' + d.nid + '</strong>'
+      var infoWindow = new google.maps.InfoWindow({content: d.title});
+      infoWindow.open(node_map.map, marker);      
+      jQuery.ajax({
+        url: '/node_map_callback/info/' + d.nid,
+        dataType: 'html',
+        error: function(request, status, exception) {
+          alert('Failed to load node data!');
+        },
+        success: function(data, status, request) {
+          infoWindow.setContent(data);
+        }
       });
-      infoWindow.open(node_map.map, marker);
     });
     return marker;
   }
