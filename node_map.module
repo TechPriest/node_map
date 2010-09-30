@@ -85,9 +85,11 @@ function node_map_settings() {
  */
 function node_map_settings_submit($form, &$form_state) {
   $enabled = array();
-  foreach ($form_state['values']['use_map'] as $key => $val)
-    if ($val)
+  foreach ($form_state['values']['use_map'] as $key => $val) {
+    if ($val) {
       $enabled[] = $key;
+    }
+  }
   variable_set('node_map_enabled_nodes', $enabled);
 }
 
@@ -185,35 +187,81 @@ function node_map_flush_caches() {
 }
 
 /**
- * Node Map ajax callback
+ * Checks if specified node type is allowed to have map
  *
+ * @param  string $type
  * @return void
  */
-function node_map_ajax_callback() {
-  $type = func_get_arg(0);
+function _node_map_type_check($type) {
   $enabled = variable_get('node_map_enabled_nodes', array());
   if (!$type || !in_array($type, $enabled)) {
     drupal_access_denied();
-    return;
+    return false;
   }
-  $markerdata = _node_map_get_marker_info();
+  return true;
+}
+
+/**
+ * Provides markers data for js part of the app
+ *
+ * @param array $args
+ * @return void
+ */
+function _node_map_ajax_callback_markers($args) {
+  $type = array_shift($args);
+  if (!_node_map_type_check($type))
+    return;
+
+  $markerdata = _node_map_get_marker_info(TRUE); // @@@TODO: remove the parameter after debugging to enable caching
   $result = array();
-  $q = sprintf('SELECT {location_marker}.*, {location}.*, {node}.title FROM {location_marker} '
+  $q = sprintf('SELECT {location_marker}.*, {location}.*, {node}.nid, {node}.title FROM {location_marker} '
     . 'INNER JOIN {location} ON {location_marker}.lid = {location}.lid '
     . 'INNER JOIN {location_instance} ON {location_marker}.lid = {location_instance}.lid '
     . 'INNER JOIN {node} ON {node}.nid = {location_instance}.nid '
     . 'WHERE {node}.type="%s"', db_escape_string($type));
   $r = db_query($q);
   while ($row = db_fetch_object($r)) {
-    if (!$row->marker)
+    if (!$row->marker) {
       $row->marker = 'big red';   // @@@TODO: make default marker an option
+    }
     $row->marker = isset($markerdata[$row->marker]) ? $markerdata[$row->marker] : null;
     $result[] = $row;
   }
   // Send data to client
   header('Content-Type: text/javascript; charset: UTF-8');
   print(json_encode($result));
-  exit();
+  exit();  
+}
+
+/**
+ * Provides node info for baloon tips
+ *
+ * @param  $args
+ * @return void
+ */
+function _node_map_ajax_callback_info($args) {
+  $type = array_shift($args);
+  if (!_node_map_type_check($type))
+    return;
+
+  $nid = array_shift($args);
+  return sprintf('<strong>This is node with nid = %d</strong>', $nid);
+}
+
+/**
+ * Node Map ajax callback
+ *
+ * @return void
+ */
+function node_map_ajax_callback() {
+  $args = func_get_args();
+  $op = array_shift($args);
+  switch ($op) {
+    case 'markers':
+      return _node_map_ajax_callback_markers($args);
+    case 'info':
+      return _node_map_ajax_callback_info($args);
+  }
 }
 
 /**
@@ -231,10 +279,10 @@ function node_map_menu() {
     'access arguments' => array('administer node map'),
     'type' => MENU_CALLBACK,
   );
-  $items['node_map_callback/%'] = array(
+  $items['node_map_callback/%/%'] = array(
     'title' => 'Node Map ajax callback',
     'page callback' => 'node_map_ajax_callback',
-    'page arguments' => array(1),
+    'page arguments' => array(1, 2),
     'access arguments' => array('access node map'),
     'type' => MENU_CALLBACK,
   );

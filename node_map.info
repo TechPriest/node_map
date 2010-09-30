@@ -6,4 +6,4 @@ package = Misc
 dependencies[] = content
 dependencies[] = location
 dependencies[] = gmap
-
+dependencies[] = views
