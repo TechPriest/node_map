@@ -30,16 +30,25 @@ var node_map = {
     var bounds = new google.maps.LatLngBounds();
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
-      var marker = new google.maps.Marker({
-        title: d.info,
+      var markerOpts = {
+        title: d.title,
         position: new google.maps.LatLng(d.latitude, d.longitude),
         map: node_map.map
-      });
+      };
+      if (d.marker) {
+        markerOpts.icon = new google.maps.MarkerImage(d.marker.path + d.marker.iconfile,
+            undefined, undefined, new google.maps.Point(d.marker.anchorX, d.marker.anchorY));
+        if (d.marker.shadow) {
+          markerOpts.shadow = new google.maps.MarkerImage(d.marker.path + d.marker.shadow,
+            undefined, undefined, new google.maps.Point(d.marker.anchorX, d.marker.anchorY));
+        }
+      }
+      var marker = new google.maps.Marker(markerOpts); 
       bounds.extend(marker.position);
     }
     // fit all the markers to the map
     node_map.map.fitBounds(bounds);
-    node_map.map.setZoom(Math.min(14, node_map.map.getZoom()));
+    node_map.map.setZoom(Math.min(17, node_map.map.getZoom()));
   }
 }
 

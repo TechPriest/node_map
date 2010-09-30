@@ -98,16 +98,15 @@ function node_map_settings_submit($form, &$form_state) {
  * @return void
  */
 function node_map_page() {
-//  krumo(gmap_get_marker_titles());
-//  krumo(gmap_get_icondata());
-  _node_map_get_marker_info();
-
-  $args = func_get_args();
-  $type = array_shift($args);
+  $type = func_get_arg(0);
   $type = strip_tags($type);
   $enabled = variable_get('node_map_enabled_nodes', array());
-  if (!in_array($type, $enabled))
-    return sprintf('Node map for type "%s" is disabled.', $type);
+  if (!in_array($type, $enabled)) {
+    drupal_set_message(sprintf('Node map for type "%s" is disabled.', $type), 'error');
+    drupal_access_denied();
+    return;
+  }
+
   // Render the map
   $dir = drupal_get_path('module', 'node_map');
   drupal_add_css($dir . '/css/node_map.css');
@@ -124,6 +123,7 @@ function node_map_page() {
  * @return array
  */
 function _node_map_process_marker_dir($path) {
+  global $base_url;
   static $fields = array('shadow', 'anchorX', 'anchorY', 'infoX', 'infoY');
   $markerdata = array();
   $inifiles = file_scan_directory($path, '.*\.ini$');
@@ -135,20 +135,19 @@ function _node_map_process_marker_dir($path) {
     foreach ($ini as $title => $section) {
       // @@@TODO: more compact data storage
       $markerobj = new stdClass();
-      $markerobj->type = $title;
-      $markerobj->path = $path . $tpath;
+      $markerobj->path = $base_url . '/' . $path . $tpath;
 
       if (!isset($section['name']) || !isset($section['sequence']))
         continue; // invalid marker definition
       $markerobj->name = $section['name'];
-      $markerobj->sequence = $section['sequence'];
+      $markerobj->iconfile = explode(',', $section['sequence'], 1);
+      $markerobj->iconfile = $markerobj->iconfile[0];
 
       foreach ($fields as $field) {
         $markerobj->$field = isset($section[$field]) ? $section[$field] :
           (isset($defaults[$field]) ? $defaults[$field] : '');
       }
-
-      $markerdata[] = $markerobj;
+      $markerdata[$title] = $markerobj;
       unset($markerobj);
     }
     unset($ini);
@@ -167,9 +166,11 @@ function _node_map_get_marker_info($reset = FALSE) {
   if ($reset || !($markerdata = cache_get('node_map_marker_info')))
   {
     $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
-    $markerdata = _node_map_process_marker_dir($markerdir, $markerdata);
+    $markerdata = _node_map_process_marker_dir($markerdir);
     cache_set('node_map_marker_info', $markerdata);
   }
+  else
+    $markerdata = $markerdata->data;
   return $markerdata;
 }
 
@@ -190,47 +191,25 @@ function node_map_flush_caches() {
  */
 function node_map_ajax_callback() {
   $type = func_get_arg(0);
-  if (!$type)
+  $enabled = variable_get('node_map_enabled_nodes', array());
+  if (!$type || !in_array($type, $enabled)) {
     drupal_access_denied();
-  $q = sprintf('SELECT {location_marker}.*, {location}.* FROM {location_marker} '
+    return;
+  }
+  $markerdata = _node_map_get_marker_info();
+  $result = array();
+  $q = sprintf('SELECT {location_marker}.*, {location}.*, {node}.title FROM {location_marker} '
     . 'INNER JOIN {location} ON {location_marker}.lid = {location}.lid '
     . 'INNER JOIN {location_instance} ON {location_marker}.lid = {location_instance}.lid '
     . 'INNER JOIN {node} ON {node}.nid = {location_instance}.nid '
     . 'WHERE {node}.type="%s"', db_escape_string($type));
-  $markers = array();  
   $r = db_query($q);
   while ($row = db_fetch_object($r)) {
-    $markers[] = $row;
+    if (!$row->marker)
+      $row->marker = 'big red';   // @@@TODO: make default marker an option
+    $row->marker = isset($markerdata[$row->marker]) ? $markerdata[$row->marker] : null;
+    $result[] = $row;
   }
-  $result = array();
-  $ndx = 0;
-  foreach ($markers as $marker) {
-    $marker->info = sprintf('My marker %d', ++$ndx);
-    $result[] = $marker;
-  }
-
-//  srand();
-//
-//  // populate marker list
-//  $markers = array();
-//
-//  $lat = 41.875696;
-//  $lng = -87.624207;
-//
-//  $marker = new stdClass();
-//  $marker->latitude = $lat;
-//  $marker->longitude = $lng;
-//  $marker->info = sprintf('My marker');
-//  $markers[] = $marker;
-//
-//  for ($i = 0; $i < 10; $i++) {
-//    $marker = new stdClass();
-//    $marker->latitude = $lat - (rand() / getrandmax());
-//    $marker->longitude = $lng - (rand() / getrandmax());;
-//    $marker->info = sprintf('My marker %d', $i);
-//    $markers[] = $marker;
-//  }
-
   // Send data to client
   header('Content-Type: text/javascript; charset: UTF-8');
   print(json_encode($result));
