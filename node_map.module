@@ -39,7 +39,7 @@ function theme_node_map_settings($form) {
 }
 
 /**
- * Settings form form Taxonomy Map
+ * Settings form form Node Map
  * @return array
  */
 function node_map_settings() {
@@ -74,6 +74,15 @@ function node_map_settings() {
   );
 
   return $form;
+}
+
+/**
+ * Settings form for node type 
+ * @return void
+ */
+function node_map_settings_nodetype() {
+  krumo(func_get_args());
+  $form = array();
 }
 
 /**
@@ -273,6 +282,14 @@ function node_map_menu() {
     'description' => 'Configure Node Map.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('node_map_settings'),
+    'access arguments' => array('administer node map'),
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/settings/node_map_type'] = array(
+    'title' => t('Node Map Type settings'),
+    'description' => 'Configure Node Map per node type.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('node_map_settings_nodetype'),
     'access arguments' => array('administer node map'),
     'type' => MENU_CALLBACK,
   );
