@@ -7,3 +7,4 @@ dependencies[] = content
 dependencies[] = location
 dependencies[] = gmap
 dependencies[] = views
+dependencies[] = location_marker

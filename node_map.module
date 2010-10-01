@@ -30,6 +30,7 @@ function theme_node_map_settings($form) {
     $rows[] = array(
       drupal_render($form['use_map'][$key]),
       drupal_render($form['name'][$key]),
+      drupal_render($form['options'][$key]),      
     );
   }
 
@@ -47,7 +48,7 @@ function node_map_settings() {
   // set header
   $form['header'] = array(
     '#type' => 'value',
-    '#value' => array(theme('table_select_header_cell'), t('Name')),
+    '#value' => array(theme('table_select_header_cell'), t('Name'), t('Options')),
   );
 
   // gather data
@@ -57,6 +58,7 @@ function node_map_settings() {
     $options[$type->type] = '';
     $form['use_map'][$type->type] = '';
     $form['name'][$type->type] = array('#value' => l($type->name, sprintf('node_map/%s', $type->type)));
+    $form['options'][$type->type] = array('#value' => l(t('Set up'), sprintf('admin/settings/node_map_type/%s', $type->type)));
   }
 
   $form['use_map'] = array(
@@ -70,19 +72,10 @@ function node_map_settings() {
   );
   $form['cancel'] = array(
     '#type' => 'markup',
-    '#value' => l(t('Cancel'), 'settings'), 
+    '#value' => l(t('Cancel'), 'admin/settings'), 
   );
 
   return $form;
-}
-
-/**
- * Settings form for node type 
- * @return void
- */
-function node_map_settings_nodetype() {
-  krumo(func_get_args());
-  $form = array();
 }
 
 /**
@@ -103,6 +96,84 @@ function node_map_settings_submit($form, &$form_state) {
 }
 
 /**
+ * Settings form for node type 
+ * @return void
+ */
+function node_map_settings_nodetype() {
+  $args = func_get_args();
+  $type = $args[1];
+  if (!$type || !_node_map_type_check($type)) {
+    drupal_set_message(sprintf('Node map for type "%s" is disabled.', $type), 'error');
+    drupal_access_denied();
+    return;
+  }
+
+  $type_map_options = variable_get('node_map_type_options', array());
+  $options = $type_map_options[$type];
+  // determine type name
+  $q = sprintf('SELECT type, name FROM {node_type} WHERE type="%s" LIMIT 1', db_escape_string($type));
+  $typename = db_result(db_query($q));
+  drupal_set_title(t('Node Map Settings') . ' - ' . $typename);
+  // grab views list
+  $q = 'SELECT vid, name FROM {views_view}';
+  $r = db_query($q);
+  $views = array();
+  while ($row = db_fetch_array($r)) {
+    $views[($row['vid'])] = $row['name'];
+  }
+  if (!count($views)) {
+    drupal_set_message(t('No Views defined'), 'error');
+    drupal_access_denied();
+    return;
+  }
+  // prepare the form data
+  $form = array();
+  $form['node_map_view'] = array(
+    '#type' => 'radios',
+    '#title' => t('Select view for this node type'),
+    '#default_value' => isset($options['view']) ? $options['view'] : 0,
+    '#options' => $views,
+    '#description' => t('This setting lets you choose which view will be used to display node information in baloon tip.'),
+  );
+
+  $form['node_map_view_display_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Display ID for the view'),
+    '#default_value' => isset($options['display_id']) ? $options['display_id'] : 'default',
+    '#size' => 15,
+    '#description' => t('This setting lets you choose which DisplayID of selected view will be used. If you do not know what to put in here - just leave the default value "default", anyway, "page" or "block" should work too.'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  $form['cancel'] = array(
+    '#type' => 'markup',
+    '#value' => l(t('Cancel'), 'admin/settings/node_map'),
+  );
+
+  return $form;
+}
+
+/**
+ * Processes data from the node map type settings form
+ *
+ * @param array $form
+ * @param array $form_state
+ * @return void
+ */
+function node_map_settings_nodetype_submit($form, &$form_state) {
+  $type_map_options = variable_get('node_map_type_options', array());
+  $nodetype = $form['#parameters'][2];
+  $options = array('view' => $form_state['values']['node_map_view'],
+    'display_id' => $form_state['values']['node_map_view_display_id']);
+  $type_map_options[$nodetype] = $options;
+  variable_set('node_map_type_options', $type_map_options);
+  drupal_set_message(t('Settings successfully saved'));
+}
+
+/**
  * Renders node map page
  *
  * @param  string $type
@@ -117,6 +188,11 @@ function node_map_page() {
     drupal_access_denied();
     return;
   }
+
+  // get full name of the type
+  $q = sprintf('SELECT name FROM {node_type} WHERE type="%s"', db_escape_string($type));
+  $typename = db_result(db_query($q));
+  drupal_set_title(t('Node Map') . ' - ' . $typename);
 
   // Render the map
   $dir = drupal_get_path('module', 'node_map');
@@ -174,8 +250,7 @@ function _node_map_process_marker_dir($path) {
  * @return void
  */
 function _node_map_get_marker_info($reset = FALSE) {
-  if ($reset || !($markerdata = cache_get('node_map_marker_info')))
-  {
+  if ($reset || !($markerdata = cache_get('node_map_marker_info'))) {
     $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
     $markerdata = _node_map_process_marker_dir($markerdir);
     cache_set('node_map_marker_info', $markerdata);
@@ -192,7 +267,7 @@ function _node_map_get_marker_info($reset = FALSE) {
  * @return void
  */
 function node_map_flush_caches() {
-//  cache_clear_all('node_map_marker_info');
+//  cache_clear_all(array('node_map_marker_info'));
 }
 
 /**
@@ -250,7 +325,19 @@ function _node_map_ajax_callback_markers($args) {
  */
 function _node_map_ajax_callback_info($args) {
   $nid = array_shift($args);
-  printf('<strong>This is node with nid = %d</strong>', $nid);
+  // determine node type
+  $q = sprintf('SELECT type FROM {node} WHERE nid="%d"', $nid);
+  $type = db_result(db_query($q));
+  if (!_node_map_type_check($type)) {
+    drupal_set_message(sprintf('Node map for type "%s" is disabled.', $type), 'error');
+    drupal_access_denied();
+    return;
+  }
+  $type_map_options = variable_get('node_map_type_options', array());
+  if (isset($type_map_options[$type])) {
+    $options = $type_map_options[$type];
+    print views_embed_view($options['view'], $options['display_id'], $nid);
+  }
   exit();
 }
 
@@ -283,7 +370,7 @@ function node_map_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('node_map_settings'),
     'access arguments' => array('administer node map'),
-    'type' => MENU_CALLBACK,
+    'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/settings/node_map_type'] = array(
     'title' => t('Node Map Type settings'),

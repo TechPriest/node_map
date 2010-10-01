@@ -17,7 +17,8 @@ function node_map_install() {
  */
 function node_map_uninstall() {
   variable_del('node_map_enabled_nodes');
-  cache_clear_all(array('node_map_marker_info'));
+  variable_del('node_map_type_options');
+//  cache_clear_all(array('node_map_marker_info'));
 }
 
 
