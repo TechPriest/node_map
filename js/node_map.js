@@ -10,11 +10,11 @@ var node_map = {
     var options = {
       mapTypeId: google.maps.MapTypeId.HYBRID
     };
-    node_map.map = new google.maps.Map(jQuery('#node_map')[0], options);
+    node_map.map = new google.maps.Map($('#node_map')[0], options);
 
     // Load markers of needed type
-    var type = jQuery('#node_map').attr('data-node-type');
-    jQuery.ajax({
+    var type = $('#node_map').attr('data-node-type');
+    $.ajax({
       url: '/node_map_callback/markers/' + type,
       dataType: 'json',
       error: function(request, status, exception) {
@@ -27,6 +27,9 @@ var node_map = {
   },
 
   processData: function(data) {
+    // clear the marker list
+    $('#node_map_markerlist:first > .wrapper:first').empty();
+    // add markers to the map
     var bounds = new google.maps.LatLngBounds();
     for (var i = 0; i < data.length; i++) {
       var d = data[i];
@@ -56,7 +59,7 @@ var node_map = {
     google.maps.event.addListener(marker, 'click', function() {
       var infoWindow = new google.maps.InfoWindow({content: d.title});
       infoWindow.open(node_map.map, marker);      
-      jQuery.ajax({
+      $.ajax({
         url: '/node_map_callback/info/' + d.nid,
         dataType: 'html',
         error: function(request, status, exception) {
@@ -67,10 +70,56 @@ var node_map = {
         }
       });
     });
+    // add marker to the list
+    var itemDiv = document.createElement('div');
+    $(itemDiv).attr('class', 'item');
+    var markerWrapper = document.createElement('div');
+    $(markerWrapper).attr('class', 'markerboxwrapper');
+    var markerBox = document.createElement('div');
+    $(markerBox).attr('class', 'markerbox');
+    var caption = document.createElement('div');
+    $(caption).attr('class', 'caption');
+    var captionRef = document.createElement('a');
+    $(captionRef).attr('href', '#').attr('onclick', '{alert(123); return false;}');
+    var captionSpan = document.createElement('span');
+    $(captionSpan).attr('class', 'text').text(d.title);
+    $(captionRef).append(captionSpan);
+    $(caption).append(captionRef);
+    $(markerWrapper).append(markerBox);
+    $(itemDiv).append(markerWrapper);
+    $(itemDiv).append(caption);
+
+    $('#node_map_markerlist:first > div.wrapper:first').append(itemDiv);
+
+    var shadowImg = new Image();
+    $(shadowImg).load(function() {
+      var markerHref = document.createElement('a');
+      $(markerHref).attr('href', '#').attr('onclick', 'alert(456);return false;');
+      var shadowSpan = document.createElement('span');
+      $(shadowSpan)
+          .attr('class', 'marker-shadow')
+          .css('width', shadowImg.width + 'px')
+          .css('height', shadowImg.height + 'px')
+          .css('background-image', 'url('+shadowImg.src+')');
+      $(markerHref).append(shadowSpan);
+
+      var markerImg = new Image();
+      $(markerImg).load(function() {
+        var imageSpan = document.createElement('span');
+        $(imageSpan)
+          .attr('class', 'marker-icon')
+          .css('width', markerImg.width + 'px')
+          .css('height', markerImg.height + 'px')
+          .css('background-image', 'url('+markerImg.src+')');
+        $(shadowSpan).append(imageSpan);
+        $(markerBox).append(markerHref);
+      }).attr('src', d.marker.path + d.marker.iconfile);
+    }).attr('src', d.marker.path + d.marker.shadow);
+
     return marker;
   }
 }
 
-jQuery(document).ready(function() {
+$(document).ready(function() {
   node_map.initialize();
 });

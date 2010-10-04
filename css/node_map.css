@@ -4,5 +4,58 @@ div#node_map {
   width: 100%;
   height: 600px;
   position: relative;
+  margin: 10px 0 0 0;
 }
 
+div#node_map_markerlist {
+  width: 100%;
+  margin: 25px 0 0 0;
+  position: relative;
+}
+
+div#node_map_markerlist div.wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  float: left;
+}
+
+div#node_map_markerlist div.wrapper div.item {
+  position: relative;
+  float: left;
+  width: 200px;
+  height: 60px;
+}
+
+div#node_map_markerlist div.wrapper div.item div.markerboxwrapper {
+  position: relative;
+  height: 100%;
+  width: 60px;
+  float: left;
+  display: table;
+}
+
+div#node_map_markerlist div.wrapper div.item div.markerboxwrapper div.markerbox {
+  position: relative;
+  display: table-cell;
+  vertical-align: middle;
+}
+
+div#node_map_markerlist div.wrapper div.item div.markerboxwrapper div.markerbox span.marker-shadow,
+div#node_map_markerlist div.wrapper div.item div.markerboxwrapper div.markerbox span.marker-icon {
+  display: block;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+}
+
+div#node_map_markerlist div.wrapper div.item div.caption {
+  postion: relative;
+  float: left;
+  display: table;
+  height: 100%;
+}
+
+div#node_map_markerlist div.wrapper div.item div.caption span.text {
+  display: table-cell;
+  vertical-align: middle;
+}

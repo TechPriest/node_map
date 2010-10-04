@@ -200,6 +200,28 @@ function node_map_page() {
   drupal_set_html_head('<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>');
   drupal_add_js($dir . '/js/node_map.js');
   $output = sprintf('<div id="node_map" data-node-type="%s"></div>', $type);
+  $output .=
+      '<div id="node_map_markerlist">
+        <div class="wrapper">
+<!--
+          <div class="item">
+            <div class="markerboxwrapper">
+              <div class="markerbox">
+                <a href="#" onclick="alert(123);">
+                  <span class="marker-shadow" style="width: 56px; height: 51px; background: url(/sites/all/modules/gmap/markers/big/shadow.png) 0 0 no-repeat;">
+                    <span class="marker-icon" style="width: 30px; height: 51px; background: url(/sites/all/modules/gmap/markers/big/blue.png) 0 0 no-repeat;"></span>
+                  </span>
+                </a>
+              </div>
+            </div>
+            <div class="caption">
+              <span class="text"><a href="#" onclick="alert(123);">Test item</a></span>
+            </div>
+          </div>
+-->
+          <div class="item"></div>
+        </div>
+       </div>';
   return $output;
 }
 
