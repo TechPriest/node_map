@@ -445,3 +445,17 @@ function node_map_help($path, $arg) {
   }
   return $output;
 }
+
+
+///////////////////////////////////
+// Panels integration
+///////////////////////////////////
+/**
+ * Implementation of hook_ctools_plugin_directory()
+ * @return void
+ */
+function node_map_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/content_types';
+  }
+}
