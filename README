@@ -1,3 +1,3 @@
 This module renders node locations. Every node type has it's own map.
-
-Feature in process: render data from Views in bubble.
+Module integrates with Views to display node information in gmap's infowindow
+and with CTools to display itself in the Panels.

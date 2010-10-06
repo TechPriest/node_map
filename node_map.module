@@ -53,7 +53,7 @@ function node_map_settings() {
 
   // gather data
   $options = array();
-  $types = db_query('SELECT `type`, `name` FROM {node_type}');
+  $types = db_query('SELECT type, name FROM {node_type}');
   while ($type = db_fetch_object($types)) {
     $options[$type->type] = '';
     $form['use_map'][$type->type] = '';
@@ -203,6 +203,11 @@ function node_map_page() {
   $output .=
       '<div id="node_map_markerlist">
         <div class="wrapper">
+        </div>
+       </div>';
+  return $output;
+
+  /* Item DOM structure
 <!--
           <div class="item">
             <div class="markerboxwrapper">
@@ -219,10 +224,7 @@ function node_map_page() {
             </div>
           </div>
 -->
-          <div class="item"></div>
-        </div>
-       </div>';
-  return $output;
+   */
 }
 
 /**

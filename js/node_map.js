@@ -8,7 +8,13 @@ var node_map = {
   // methods
   initialize: function() {
     var options = {
-      mapTypeId: google.maps.MapTypeId.HYBRID
+      mapTypeId: google.maps.MapTypeId.HYBRID,
+      mapTypeControlOptions: {
+        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+      },
+      navigationControlOptions: {
+        style: google.maps.NavigationControlStyle.SMALL
+      }
     };
     node_map.map = new google.maps.Map($('#node_map')[0], options);
 

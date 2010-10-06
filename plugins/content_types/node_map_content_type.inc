@@ -43,10 +43,15 @@ $plugin = array(
  */
 function node_map_content_type_render($subtype, $conf, $args, $context) {
   $block = new stdClass();
-
-  $block->title = t('Node Map content type');
-  $block->content = node_map_page('organization');
-
+  if ($type = isset($conf['node_type']) ? $conf['node_type'] : '') {
+    $typename = db_result(db_query(sprintf('SELECT name FROM {node_type} WHERE type="%s" LIMIT 1', db_escape_string($type))));
+    $block->title = t('Node Map') . ' - ' . $typename;
+    $block->content = node_map_page($type);
+  } else {
+    drupal_set_message(t('Node type not set'), 'error');
+    $block->title = t('Node Map content type');
+    $block->content = t('Node type not set');
+  }
   return $block;
 }
 
@@ -55,29 +60,36 @@ function node_map_content_type_render($subtype, $conf, $args, $context) {
  */
 function node_map_content_edit_form(&$form, &$form_state) {
   $conf = $form_state['conf'];
-  $form['item1'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Item1'),
-    '#size' => 50,
-    '#description' => t('The setting for item 1.'),
-    '#default_value' => !empty($conf['item1']) ? $conf['item1'] : '',
+  // gather node types
+  $options = array();
+  $types = db_query('SELECT type, name FROM {node_type}');
+  while ($type = db_fetch_object($types)) {
+    $options[$type->type] = $type->name;
+  }
+  // form controls
+  $form['node_type'] = array(
+    '#type' => 'radios',
+    '#options' => $options,
+    '#title' => t('Node type'),
+    '#description' => t('Node type for this map'),
+    '#default_value' => isset($conf['node_type']) ? $conf['node_type'] : '',
     '#prefix' => '<div class="clear-block no-float">',
-    '#suffix' => '</div>',
+    '#suffix' => '</div>'
   );
-  $form['item2'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Item2'),
-    '#size' => 50,
-    '#description' => t('The setting for item 2'),
-    '#default_value' => !empty($conf['item2']) ? $conf['item2'] : '',
-    '#prefix' => '<div class="clear-block no-float">',
-    '#suffix' => '</div>',
-  );
+
   return $form;
 }
 
+
+/**
+ * Stores entered configuration values
+ * 
+ * @param  $form
+ * @param  $form_state
+ * @return void
+ */
 function node_map_content_edit_form_submit(&$form, &$form_state) {
-  foreach (array('item1', 'item2') as $key) {
+  foreach (array('node_type') as $key) {
     $form_state['conf'][$key] = $form_state['values'][$key];
   }
 }
