@@ -59,3 +59,10 @@ div#node_map_markerlist div.wrapper div.item div.caption span.text {
   display: table-cell;
   vertical-align: middle;
 }
+
+.node_map_loadingsign {
+  display: block;
+  width: 100%;
+  height: 85px;
+  background: url('../img/loading.gif') center center no-repeat;
+}

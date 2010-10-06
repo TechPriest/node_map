@@ -57,7 +57,10 @@ var node_map = {
     }
     var marker = new google.maps.Marker(markerOpts);
     google.maps.event.addListener(marker, 'click', function() {
-      var infoWindow = new google.maps.InfoWindow({content: d.title});
+      var infoWindow = new google.maps.InfoWindow({
+        content: d.title + '<div class="node_map_loadingsign"></div>',
+        disableAutoPan: false
+      });
       infoWindow.open(node_map.map, marker);      
       $.ajax({
         url: '/node_map_callback/info/' + d.nid,
@@ -71,6 +74,10 @@ var node_map = {
       });
     });
     // add marker to the list
+    var onclickfunc = function() {
+        node_map.map.panTo(markerOpts.position);
+        return false;
+    };
     var itemDiv = document.createElement('div');
     $(itemDiv).attr('class', 'item');
     var markerWrapper = document.createElement('div');
@@ -80,7 +87,7 @@ var node_map = {
     var caption = document.createElement('div');
     $(caption).attr('class', 'caption');
     var captionRef = document.createElement('a');
-    $(captionRef).attr('href', '#').attr('onclick', '{alert(123); return false;}');
+    $(captionRef).attr('href', '#').click(onclickfunc);
     var captionSpan = document.createElement('span');
     $(captionSpan).attr('class', 'text').text(d.title);
     $(captionRef).append(captionSpan);
@@ -94,7 +101,7 @@ var node_map = {
     var shadowImg = new Image();
     $(shadowImg).load(function() {
       var markerHref = document.createElement('a');
-      $(markerHref).attr('href', '#').attr('onclick', 'alert(456);return false;');
+      $(markerHref).attr('href', '#').click(onclickfunc);
       var shadowSpan = document.createElement('span');
       $(shadowSpan)
           .attr('class', 'marker-shadow')
