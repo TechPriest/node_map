@@ -26,6 +26,7 @@
       (this.$list = $('<div></div>'))
           .addClass("ui-markerselect-list")
           .hide();
+      this.$list.text('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean et pellentesque turpis. In a est ipsum, nec consectetur erat. Sed est velit, congue a sodales id, mattis ut velit. In eu sem id ante rhoncus commodo sit amet fringilla urna. Nullam lacinia mollis blandit. Nullam posuere placerat dolor convallis rutrum. Donec imperdiet elementum neque, vitae ultricies purus elementum vitae. Maecenas felis erat, malesuada in dapibus nec, varius sit amet tortor. Suspendisse dignissim malesuada mi. Donec aliquet, velit ac lobortis varius, magna orci dignissim arcu, id blandit dolor ante ut massa.');
       this.element.append(this.$list);
     },
 
@@ -66,9 +67,14 @@
         var shadowImg = new Image();
         $(shadowImg).load(function() {
           $shadowDiv.css({
-            height: shadowImg.height,
+            height: shadowImg.height + 'px',
+            width: shadowImg.width + 'px',
             backgroundPosition: '0 0',
-            backgroundImage: 'url('+self.options.selected.shadow+')'
+            backgroundImage: 'url('+self.options.selected.shadow+')',
+            top: '50%',
+            left: '50%',
+            marginTop: (-(shadowImg.height / 2)) + 'px',
+            marginLeft: (-(shadowImg.width / 2)) + 'px' 
           });
           $iconDiv.css({
             backgroundImage: 'url('+self.options.selected.icon+')'
@@ -102,8 +108,8 @@
       selected: {
         title: "Some marker",
         name: "some_marker",
-        shadow: "/sites/all/modules/gmap/markers/big/shadow.png",
-        icon: "/sites/all/modules/gmap/markers/big/red.png"
+        shadow: "/sites/all/modules/gmap/markers/small/shadow.png",
+        icon: "/sites/all/modules/gmap/markers/small/red.png"
       }
     }
   });
