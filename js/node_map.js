@@ -135,4 +135,5 @@ var node_map = {
 
 $(document).ready(function() {
   node_map.initialize();
+  $('#taxonomy_menu').checkmenu();
 });

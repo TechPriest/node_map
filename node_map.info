@@ -8,3 +8,8 @@ dependencies[] = location
 dependencies[] = gmap
 dependencies[] = views
 dependencies[] = location_marker
+dependencies[] = taxonomy
+dependencies[] = jquery_ui
+
+;
+version = "6.x-1.x-dev"

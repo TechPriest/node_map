@@ -93,6 +93,7 @@ function node_map_settings_submit($form, &$form_state) {
     }
   }
   variable_set('node_map_enabled_nodes', $enabled);
+  drupal_set_message(t('Settings updated'));
 }
 
 /**
@@ -198,8 +199,11 @@ function node_map_page() {
   $dir = drupal_get_path('module', 'node_map');
   drupal_add_css($dir . '/css/node_map.css');
   drupal_set_html_head('<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>');
+  jquery_ui_add();
   drupal_add_js($dir . '/js/node_map.js');
-  $output = sprintf('<div id="node_map" data-node-type="%s"></div>', $type);
+  drupal_add_js($dir . '/js/ui.checkmenu.js');
+  $output = '<div id="taxonomy_menu"></div>';
+  $output .= sprintf('<div id="node_map" data-node-type="%s"></div>', $type);
   $output .=
       '<div id="node_map_markerlist">
         <div class="wrapper">
@@ -427,7 +431,7 @@ function node_map_menu() {
  * @return array
  */
 function node_map_perm() {
-  return array('access node map');
+  return array('access node map', 'administer node map');
 }
 
 /**

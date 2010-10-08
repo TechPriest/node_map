@@ -48,15 +48,26 @@ function location_marker_locationapi(&$obj, $op, $a3, $a4, $a5) {
     case 'field_expand':
       switch ($a3) {
         case 'location_marker':
-          $options = array('' => t('None'));
-          $options = array_merge($options, gmap_get_marker_titles());
-          return array(
+          $dir = drupal_get_path('module', 'node_map');
+          jquery_ui_add();
+          drupal_add_css("$dir/css/ui.markerselect.css");
+          drupal_add_js("$dir/js/ui.markerselect.js");
+          drupal_add_js("$dir/js/location_marker.js");          
+
+          //$options = array('' => t('None'));
+          //$options = array_merge($options, gmap_get_marker_titles());
+          /*return array(
             '#type'           => 'select',
             '#multiple'       => FALSE,
             '#options'        => $options,
             '#title'          => t('Location marker'),
             '#default_value'  => $obj,
             '#required'       => FALSE,            
+          );*/
+          return array(
+            '#type' => 'markup',
+            '#title'          => t('Location marker'),
+            '#value' => '<div class="markerselect"></div>',
           );
       }
       break;
