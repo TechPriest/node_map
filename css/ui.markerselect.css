@@ -73,13 +73,12 @@
   top: 12px;
 }
 
-
 .ui-markerselect-list {
   position: absolute;
+  float: left;
   top: 59px; 
-  width: 400px;
+  width: 410px;
   margin: 0 0 0 -1px; /* align borders */
-  height: 150px; /* will do for now */
   border: 1px solid silver;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
@@ -91,4 +90,45 @@
   cursor: auto;
   box-shadow: 5px 5px 10px #000;
   --webkit-box-shadow: 5px 5px 10px #000;
+}
+
+
+
+/* begin tyny scrollbar styles */
+/*#scrollbar1 { width: 520px; clear: both; margin: 20px 0 10px; }*/
+.ui-markerselect-list .viewport { width: 400px; height: 600px; overflow: hidden; position: relative; }
+.ui-markerselect-list .overview { list-style: none; position: absolute; left: 0; top: 0; }
+.ui-markerselect-list .thumb .end,
+.ui-markerselect-list .thumb { background-color: #003D5D; }
+.ui-markerselect-list .scrollbar { position: relative; float: right; width: 7px; margin: 0 2px 0 0; }
+.ui-markerselect-list .track { background-color: #D8EEFD; height: 100%; width:5px; position: relative; padding: 0 1px; }
+.ui-markerselect-list .thumb { height: 20px; width: 5px; cursor: pointer; overflow: hidden; position: absolute; top: 0; }
+.ui-markerselect-list .thumb .end { overflow: hidden; height: 5px; width: 13px; }
+.ui-markerselect-list .disable{ display: none; }
+/* end tyny scrollbar styles */
+
+.ui-markerselect-list .item {
+  position: relative;
+  float: left;
+  width: 198px;
+  height: 58px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  -moz-border-radius: 3px;
+  cursor: pointer;
+}
+
+.ui-markerselect-list .item:hover {
+  border-color: blue;
+  background-color: #fbfbff;
+}
+
+.ui-markerselect-list .item .markerwrapper {
+  position: relative;
+  float: left;
+}
+
+.ui-markerselect-list .item .caption {
+  float: left;
+  margin: 3px 0 0 0;
 }

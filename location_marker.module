@@ -51,6 +51,7 @@ function location_marker_locationapi(&$obj, $op, $a3, $a4, $a5) {
           $dir = drupal_get_path('module', 'node_map');
           jquery_ui_add();
           drupal_add_css("$dir/css/ui.markerselect.css");
+          drupal_add_js("$dir/js/jquery.tinyscrollbar.min.js");
           drupal_add_js("$dir/js/ui.markerselect.js");
           drupal_add_js("$dir/js/location_marker.js");          
 
@@ -66,7 +67,7 @@ function location_marker_locationapi(&$obj, $op, $a3, $a4, $a5) {
           );*/
           return array(
             '#type' => 'markup',
-            '#title'          => t('Location marker'),
+            '#title' => t('Location marker'),
             '#value' => '<div class="markerselect"></div>',
           );
       }

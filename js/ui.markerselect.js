@@ -21,13 +21,48 @@
       this.listVisible ? this._hideList() : this._showList();
     },
 
+    _fillItem: function($itemDiv, itemDescr) {
+      var $markerWrapperDiv = $('<div></div>');
+      $markerWrapperDiv.addClass('markerwrapper');
+      var $shadowDiv = $('<div></div>');
+      $shadowDiv.addClass('shadow');
+      var $iconDiv = $('<div></div>');
+      $iconDiv.addClass('icon');
+      $shadowDiv.append($iconDiv);
+      this._setButtonMarker($shadowDiv, $iconDiv, itemDescr);
+      $markerWrapperDiv.append($shadowDiv);                
+      $itemDiv.append($markerWrapperDiv);
+      $markerWrapperDiv.attr('title', itemDescr.title);
+
+      var $captionDiv = $('<div></div>');
+      $captionDiv
+          .addClass('caption')
+          .text(itemDescr.title);
+      $itemDiv.append($captionDiv);
+    },
+
     _createList: function() {
       // create dummy list for testing purposes now
       (this.$list = $('<div></div>'))
-          .addClass("ui-markerselect-list")
-          .hide();
-      this.$list.text('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean et pellentesque turpis. In a est ipsum, nec consectetur erat. Sed est velit, congue a sodales id, mattis ut velit. In eu sem id ante rhoncus commodo sit amet fringilla urna. Nullam lacinia mollis blandit. Nullam posuere placerat dolor convallis rutrum. Donec imperdiet elementum neque, vitae ultricies purus elementum vitae. Maecenas felis erat, malesuada in dapibus nec, varius sit amet tortor. Suspendisse dignissim malesuada mi. Donec aliquet, velit ac lobortis varius, magna orci dignissim arcu, id blandit dolor ante ut massa.');
+          .addClass("ui-markerselect-list");
+
+      this.$list.append('<div class="scrollbar"><div class="track"><div class="thumb"><div class="end"></div></div></div></div>');
+      var $viewport = $('<div></div>');
+      $viewport.addClass('viewport');
+      this.$list.append($viewport);
+      var $overview = $('<div></div>');
+      $overview.addClass('overview');
+      
+      for (var i = 0; i < 100; i++) {
+        var $itemDiv = $('<div></div>');
+        $itemDiv.addClass('item');
+        this._fillItem($itemDiv, this.options.selected);
+        $overview.append($itemDiv);
+      }
+      $viewport.append($overview);
       this.element.append(this.$list);
+      this.$list.tinyscrollbar();
+      this.$list.hide();
     },
 
     _showList: function() {
@@ -48,6 +83,75 @@
       }
     },
 
+    // utility methods
+    _setDivImageSrc: function($div, url, callback) {
+      var self = this;
+      var img = new Image();
+      if (url) {
+        $(img).load(function(){
+          $div
+              .css({
+                width: img.width + 'px',
+                height: img.height + 'px',
+                backgroundImage: 'url(' + img.src + ')'
+              })
+              .attr({             // to pass dimensions to further procession
+                width: img.width,
+                height: img.height
+              });
+          if (callback)
+            callback();
+        }).attr('src', url);
+      } else {
+        $div
+          .css({
+            width: 0,
+            height: 0
+          })
+          .attr({
+            width: 0,
+            height: 0
+          });
+        if (callback)
+          callback();
+      }
+    },
+
+    _positionShadow: function($shadowDiv) {
+      $shadowDiv.css({
+        top: '50%',
+        left: '50%',
+        marginTop: (-($shadowDiv.attr('height') / 2)) + 'px',
+        marginLeft: (-($shadowDiv.attr('width') / 2)) + 'px'
+      });
+    },
+
+    _setButtonMarker: function($shadowDiv, $iconDiv, markerDescr) {
+      var self = this;
+      if (markerDescr.shadow) {
+        self._setDivImageSrc($shadowDiv, markerDescr.shadow, function() {
+          self._setDivImageSrc($iconDiv, markerDescr.icon, function() {
+            self._positionShadow($shadowDiv);
+          })
+        });
+      } else {
+        self._setDivImageSrc($iconDiv, markerDescr.icon, function() {
+          var w = $iconDiv.attr('width');
+          var h = $iconDiv.attr('height');
+          $shadowDiv
+              .css({
+                width: w + 'px',
+                height: h + 'px'
+              })
+              .attr({
+                width: w,
+                height: h
+              });
+          self._positionShadow($shadowDiv);
+        })
+      }
+    },
+
     // constructor
     _init: function() {
       var self = this;
@@ -63,30 +167,14 @@
       $shadowDiv.addClass('shadow');
       $iconDiv.addClass('icon');
       $shadowDiv.append($iconDiv);
-      if (this.options.selected) {
-        var shadowImg = new Image();
-        $(shadowImg).load(function() {
-          $shadowDiv.css({
-            height: shadowImg.height + 'px',
-            width: shadowImg.width + 'px',
-            backgroundPosition: '0 0',
-            backgroundImage: 'url('+self.options.selected.shadow+')',
-            top: '50%',
-            left: '50%',
-            marginTop: (-(shadowImg.height / 2)) + 'px',
-            marginLeft: (-(shadowImg.width / 2)) + 'px' 
-          });
-          $iconDiv.css({
-            backgroundImage: 'url('+self.options.selected.icon+')'
-          });
-        }).attr('src', this.options.selected.shadow);
-        this.element.attr('title', this.options.selected.title);
-      }
-
       var $wrapper = $('<div></div>');
       $wrapper
           .addClass('markerwrapper')
-          .append($shadowDiv);
+          .append($shadowDiv);      
+      if (this.options.selected) {
+        this._setButtonMarker($shadowDiv, $iconDiv, this.options.selected);
+        $wrapper.attr('title', this.options.selected.title);
+      }
 
       this.element
         .addClass("ui-markerselect ui-widget ui-widget-content ui-corner-all")
