@@ -153,7 +153,8 @@
           $shadowDiv
               .css({
                 width: w + 'px',
-                height: h + 'px'
+                height: h + 'px',
+                backgroundImage: 'none'
               })
               .attr({
                 width: w,
