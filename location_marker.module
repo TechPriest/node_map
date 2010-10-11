@@ -2,6 +2,47 @@
 // $id$
 
 /**
+ * Prepared data for markerselect widget
+ *
+ * @param string $markerName
+ * @return void
+ */
+function _location_marker_prepare_js($markerName) {
+  $markerInfo = node_map_get_marker_info();
+  $markerData = json_encode($markerInfo);
+  $selectedName = 'null';
+  $selected = 'null';
+  if ($markerName) {
+    foreach ($markerInfo as $key => $val) {
+      if ($markerName == $key) {
+        $selectedName = $key;
+        $selected = json_encode($val);
+        break;
+      }
+    }
+  }
+  // @@@TODO: determine real name of current input
+  $script =
+  "
+/**
+ * Initializes markerselector.
+ * Have to make it by inline code to reduce server load caused by Drupal bootstrap.
+ */
+$(function() {
+  $('.markerselect').markerselect({
+    name:\"locations[0][location_marker]\",
+    data:$markerData,
+    selectedName:\"$selectedName\",
+    selected:$selected    
+  });
+});
+  ";
+
+  return $script;
+}
+
+
+/**
  * Implementation of hook_moduleapi()
  *
  * @param object $obj
@@ -53,7 +94,7 @@ function location_marker_locationapi(&$obj, $op, $a3, $a4, $a5) {
           drupal_add_css("$dir/css/ui.markerselect.css");
           drupal_add_js("$dir/js/jquery.tinyscrollbar.min.js");
           drupal_add_js("$dir/js/ui.markerselect.js");
-          drupal_add_js("$dir/js/location_marker.js");          
+          drupal_add_js(_location_marker_prepare_js($obj), 'inline');          
 
           //$options = array('' => t('None'));
           //$options = array_merge($options, gmap_get_marker_titles());

@@ -255,8 +255,8 @@ function _node_map_process_marker_dir($path) {
       if (!isset($section['name']) || !isset($section['sequence']))
         continue; // invalid marker definition
       $markerobj->name = $section['name'];
-      $markerobj->iconfile = explode(',', $section['sequence'], 1);
-      $markerobj->iconfile = $markerobj->iconfile[0];
+      $tmp = explode(',', $section['sequence']);      
+      $markerobj->iconfile = $tmp[0];
 
       foreach ($fields as $field) {
         $markerobj->$field = isset($section[$field]) ? $section[$field] :
@@ -277,7 +277,7 @@ function _node_map_process_marker_dir($path) {
  * @param bool $reset
  * @return void
  */
-function _node_map_get_marker_info($reset = FALSE) {
+function node_map_get_marker_info($reset = FALSE) {
   if ($reset || !($markerdata = cache_get('node_map_marker_info'))) {
     $markerdir = variable_get('gmap_markerfiles', drupal_get_path('module', 'gmap') .'/markers');
     $markerdata = _node_map_process_marker_dir($markerdir);
@@ -324,7 +324,7 @@ function _node_map_ajax_callback_markers($args) {
   if (!_node_map_type_check($type))
     return;
 
-  $markerdata = _node_map_get_marker_info(TRUE); // @@@TODO: remove the parameter after debugging to enable caching
+  $markerdata = node_map_get_marker_info();
   $result = array();
   $q = sprintf('SELECT {location_marker}.*, {location}.*, {node}.nid, {node}.title FROM {location_marker} '
     . 'INNER JOIN {location} ON {location_marker}.lid = {location}.lid '

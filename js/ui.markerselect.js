@@ -7,6 +7,8 @@
 ( function($) {
   $.widget("ui.markerselect", {
     listVisible: false,
+    $shadowDiv: null,
+    $iconDiv: null,
     $list: null,
     $input: null,
     $selectedMarkerContainer: null,
@@ -21,7 +23,8 @@
       this.listVisible ? this._hideList() : this._showList();
     },
 
-    _fillItem: function($itemDiv, itemDescr) {
+    _fillItem: function($itemDiv, itemName, itemDescr) {
+      var self = this;
       var $markerWrapperDiv = $('<div></div>');
       $markerWrapperDiv.addClass('markerwrapper');
       var $shadowDiv = $('<div></div>');
@@ -32,13 +35,20 @@
       this._setButtonMarker($shadowDiv, $iconDiv, itemDescr);
       $markerWrapperDiv.append($shadowDiv);                
       $itemDiv.append($markerWrapperDiv);
-      $markerWrapperDiv.attr('title', itemDescr.title);
+      $shadowDiv.attr('title', itemDescr.name);
 
       var $captionDiv = $('<div></div>');
       $captionDiv
           .addClass('caption')
-          .text(itemDescr.title);
+          .text(itemDescr.name);
       $itemDiv.append($captionDiv);
+      $itemDiv.click( function() {
+        self.$input.val(itemName);
+        // update marker on the button
+        self._setButtonMarker(self.$shadowDiv, self.$iconDiv, itemDescr);
+        self.$shadowDiv.attr('title', itemDescr.name);
+        // no need to hide the list - parent handler does this for us
+      });
     },
 
     _createList: function() {
@@ -52,11 +62,13 @@
       this.$list.append($viewport);
       var $overview = $('<div></div>');
       $overview.addClass('overview');
-      
-      for (var i = 0; i < 100; i++) {
+
+      var data = this.options.data;
+      for (var i in data) {
+        var markerDescr = data[i];
         var $itemDiv = $('<div></div>');
         $itemDiv.addClass('item');
-        this._fillItem($itemDiv, this.options.selected);
+        this._fillItem($itemDiv, i, markerDescr);
         $overview.append($itemDiv);
       }
       $viewport.append($overview);
@@ -129,13 +141,13 @@
     _setButtonMarker: function($shadowDiv, $iconDiv, markerDescr) {
       var self = this;
       if (markerDescr.shadow) {
-        self._setDivImageSrc($shadowDiv, markerDescr.shadow, function() {
-          self._setDivImageSrc($iconDiv, markerDescr.icon, function() {
+        self._setDivImageSrc($shadowDiv, markerDescr.path + markerDescr.shadow, function() {
+          self._setDivImageSrc($iconDiv, markerDescr.path + markerDescr.iconfile, function() {
             self._positionShadow($shadowDiv);
           })
         });
       } else {
-        self._setDivImageSrc($iconDiv, markerDescr.icon, function() {
+        self._setDivImageSrc($iconDiv, markerDescr.path + markerDescr.iconfile, function() {
           var w = $iconDiv.attr('width');
           var h = $iconDiv.attr('height');
           $shadowDiv
@@ -162,18 +174,19 @@
           value: 'somevalue' // @TODO: selected marker name here
         });
 
-      var $shadowDiv = $('<div></div>');
-      var $iconDiv = $('<div></div>');
-      $shadowDiv.addClass('shadow');
-      $iconDiv.addClass('icon');
-      $shadowDiv.append($iconDiv);
+      self.$shadowDiv = $('<div></div>');
+      self.$iconDiv = $('<div></div>');
+      self.$shadowDiv.addClass('shadow');
+      self.$iconDiv.addClass('icon');
+      self.$shadowDiv.append(self.$iconDiv);
       var $wrapper = $('<div></div>');
       $wrapper
           .addClass('markerwrapper')
-          .append($shadowDiv);      
-      if (this.options.selected) {
-        this._setButtonMarker($shadowDiv, $iconDiv, this.options.selected);
-        $wrapper.attr('title', this.options.selected.title);
+          .append(self.$shadowDiv);      
+      if (self.options.selected) {
+        self._setButtonMarker(self.$shadowDiv, self.$iconDiv, this.options.selected);
+        self.$shadowDiv.attr('title', this.options.selected.name);
+        self.$input.val(self.options.selectedName);
       }
 
       this.element
@@ -193,12 +206,9 @@
     version: "1.0.0",
     defaults: {
       name: "marker",
-      selected: {
-        title: "Some marker",
-        name: "some_marker",
-        shadow: "/sites/all/modules/gmap/markers/small/shadow.png",
-        icon: "/sites/all/modules/gmap/markers/small/red.png"
-      }
+      data: [],
+      selectedName: null,
+      selected: null
     }
   });
 }) (jQuery);
