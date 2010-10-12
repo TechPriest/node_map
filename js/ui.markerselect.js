@@ -183,7 +183,7 @@
         .attr({
           name: this.options.name,
           type: 'hidden',
-          value: 'somevalue' // @TODO: selected marker name here
+          value: this.options.selectedName 
         });
 
       self.$shadowDiv = $('<div></div>');
