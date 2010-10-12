@@ -1,6 +1,8 @@
 <?php
 // $id$
 
+require_once(dirname(__FILE__) . '/inc/markerinfo.inc');
+
 /**
  * Prepared data for markerselect widget
  *
@@ -22,6 +24,12 @@ function _location_marker_prepare_js($markerName) {
     }
   }
   // @@@TODO: determine real name of current input
+//    \$('.markerselect').markerselect({
+//      name:\"locations[0][location_marker]\",
+//      data:$markerData,
+//      selectedName:\"$selectedName\",
+//      selected:$selected
+//    });
   $script =
   "
 /**
@@ -29,11 +37,23 @@ function _location_marker_prepare_js($markerName) {
  * Have to make it by inline code to reduce server load caused by Drupal bootstrap.
  */
 $(function() {
-  $('.markerselect').markerselect({
-    name:\"locations[0][location_marker]\",
-    data:$markerData,
-    selectedName:\"$selectedName\",
-    selected:$selected    
+  var markerData = $markerData;  
+
+  \$('.marker-select').each( function(){
+    var \$elem = \$(this);
+    var name = \$elem.attr('name');
+    var value = \$elem.attr('value');
+    \$elem.replaceWith('<div class=\"markerselect\" data-input-name=\"'+name+'\" data-input-value=\"'+value+'\"></div>');
+  });
+  \$('.markerselect').each( function(){
+    var \$elem = \$(this);
+    var inputName = \$elem.attr('data-input-name');
+    var value = \$elem.attr('data-input-value');
+    \$elem.markerselect({
+      name: inputName,
+      data: markerData,
+      selectedName: value
+    });
   });
 });
   ";
@@ -96,21 +116,23 @@ function location_marker_locationapi(&$obj, $op, $a3, $a4, $a5) {
           drupal_add_js("$dir/js/ui.markerselect.js");
           drupal_add_js(_location_marker_prepare_js($obj), 'inline');          
 
-          //$options = array('' => t('None'));
-          //$options = array_merge($options, gmap_get_marker_titles());
-          /*return array(
+          $options = array('' => t('None'));
+          $options = array_merge($options, gmap_get_marker_titles());
+          return array(
             '#type'           => 'select',
+            '#attributes'     => array('class' => 'marker-select'),
             '#multiple'       => FALSE,
             '#options'        => $options,
             '#title'          => t('Location marker'),
             '#default_value'  => $obj,
             '#required'       => FALSE,            
-          );*/
+          );
+          /*
           return array(
             '#type' => 'markup',
             '#title' => t('Location marker'),
             '#value' => '<div class="markerselect"></div>',
-          );
+          );*/
       }
       break;
     case 'isunchanged':
@@ -162,3 +184,29 @@ function location_marker_gmap($op, &$map) {
   }
 }
 
+/**
+ * Implementation of hook_form_alter()
+ *
+ * @return void
+ */
+function location_marker_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'taxonomy_form_term' && function_exists('gmap_taxonomy_form_alter')) {
+    if (isset($form['gmap_taxonomy_marker'])) {
+      if (!isset($form['gmap_taxonomy_marker']['#attributes']))
+        $form['gmap_taxonomy_marker']['#attributes'] = array();
+      if (!isset($form['gmap_taxonomy_marker']['#attributes']['class']))
+        $form['gmap_taxonomy_marker']['#attributes']['class'] = '';
+      if ($form['gmap_taxonomy_marker']['#attributes']['class'])
+        $form['gmap_taxonomy_marker']['#attributes']['class'] .= ' ';
+      $form['gmap_taxonomy_marker']['#attributes']['class'] .= 'marker-select';
+
+      // add required files 
+      $dir = drupal_get_path('module', 'node_map');
+      jquery_ui_add();
+      drupal_add_css("$dir/css/ui.markerselect.css");
+      drupal_add_js("$dir/js/jquery.tinyscrollbar.min.js");
+      drupal_add_js("$dir/js/ui.markerselect.js");
+      drupal_add_js(_location_marker_prepare_js($obj), 'inline');
+    }
+  }
+}

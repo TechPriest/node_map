@@ -64,6 +64,11 @@
       $overview.addClass('overview');
 
       var data = this.options.data;
+      var empty = {name: "No Marker"};
+      var $emptyItemDiv = $('<div></div>');
+      $emptyItemDiv.addClass('item');
+      this._fillItem($emptyItemDiv, "", empty);
+      $overview.append($emptyItemDiv);
       for (var i in data) {
         var markerDescr = data[i];
         var $itemDiv = $('<div></div>');
@@ -71,16 +76,18 @@
         this._fillItem($itemDiv, i, markerDescr);
         $overview.append($itemDiv);
       }
+      this.options.data = null;
       $viewport.append($overview);
       this.element.append(this.$list);
-      this.$list.tinyscrollbar();
+      this.$list.tinyscrollbar({sizethumb: 15});
       this.$list.hide();
     },
 
     _showList: function() {
       if (!this.listVisible) {
-        if (!this.$list)
+        if (!this.$list) {
           this._createList();
+        }
         this.element.addClass('active');
         this.$list.stop(true, true).slideDown(150);
         this.listVisible = true;
@@ -142,11 +149,15 @@
       var self = this;
       if (markerDescr.shadow) {
         self._setDivImageSrc($shadowDiv, markerDescr.path + markerDescr.shadow, function() {
-          self._setDivImageSrc($iconDiv, markerDescr.path + markerDescr.iconfile, function() {
-            self._positionShadow($shadowDiv);
-          })
+          if (markerDescr.iconfile) {
+            self._setDivImageSrc($iconDiv, markerDescr.path + markerDescr.iconfile, function() {
+              self._positionShadow($shadowDiv);
+            })
+          } else {
+            self._positionShadow($shadowDiv);            
+          }
         });
-      } else {
+      } else if (markerDescr.iconfile) {
         self._setDivImageSrc($iconDiv, markerDescr.path + markerDescr.iconfile, function() {
           var w = $iconDiv.attr('width');
           var h = $iconDiv.attr('height');
@@ -183,7 +194,10 @@
       var $wrapper = $('<div></div>');
       $wrapper
           .addClass('markerwrapper')
-          .append(self.$shadowDiv);      
+          .append(self.$shadowDiv);
+      if (this.options.selectedName && !this.options.selected) {
+        this.options.selected = this.options.data[this.options.selectedName];
+      }
       if (self.options.selected) {
         self._setButtonMarker(self.$shadowDiv, self.$iconDiv, this.options.selected);
         self.$shadowDiv.attr('title', this.options.selected.name);

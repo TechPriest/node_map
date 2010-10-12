@@ -7,6 +7,8 @@
   border-radius: 5px;
   -moz-border-radius: 5px;
   position: relative;
+  float: none;
+  display: inline-block;
   background-color: silver; /* for unsupported browers */
   background:
     -webkit-gradient(
@@ -77,7 +79,7 @@
   position: absolute;
   float: left;
   top: 59px; 
-  width: 410px;
+  width: 610px;
   margin: 0 0 0 -1px; /* align borders */
   border: 1px solid silver;
   border-top-right-radius: 5px;
@@ -96,7 +98,7 @@
 
 /* begin tyny scrollbar styles */
 /*#scrollbar1 { width: 520px; clear: both; margin: 20px 0 10px; }*/
-.ui-markerselect-list .viewport { width: 400px; height: 600px; overflow: hidden; position: relative; }
+.ui-markerselect-list .viewport { width: 600px; height: 250px; overflow: hidden; position: relative; }
 .ui-markerselect-list .overview { list-style: none; position: absolute; left: 0; top: 0; }
 .ui-markerselect-list .thumb .end,
 .ui-markerselect-list .thumb { background-color: #003D5D; }
@@ -130,5 +132,5 @@
 
 .ui-markerselect-list .item .caption {
   float: left;
-  margin: 3px 0 0 0;
+  overflow: hidden;
 }
